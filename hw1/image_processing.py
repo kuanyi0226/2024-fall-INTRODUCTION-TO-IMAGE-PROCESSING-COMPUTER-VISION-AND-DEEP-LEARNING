@@ -53,63 +53,195 @@ def color_extraction(file_path):
 
 #2. Image Smoothing
 #2.1
+def apply_gaussian_blur(m):
+    # Calculate the kernel size of of gaussian filter:(2m + 1) x (2m + 1)
+    kernel_size = 2 * m + 1
+    # Gaussian Blur
+    blur = cv2.GaussianBlur(original_image, (kernel_size, kernel_size), sigmaX=0, sigmaY=0)
+    # Show image
+    cv2.imshow("Gaussian Blur", blur)
+
 def gaussian_blur(file_path):
+    global original_image
     if(file_path != None):
-        img = cv2.imread(file_path)
-        blurred_img = cv2.GaussianBlur(img, (11, 11), sigmaX=5, sigmaY=5)
-        cv2.imshow("Gaussian Blurred Image", blurred_img)
+        original_image = cv2.imread(file_path)
+
+        cv2.namedWindow("Gaussian Blur")
+        cv2.createTrackbar("m", "Gaussian Blur", 1, 5, apply_gaussian_blur)
+        # init with m = 1
+        apply_gaussian_blur(1)
 
 #2.2
+def apply_bilateral_filter(m):
+    # Calculate d
+    d = 2 * m + 1
+    # Bilateral Filter
+    bilateral = cv2.bilateralFilter(original_image, d=d, sigmaColor=90, sigmaSpace=90)
+    # Show image 
+    cv2.imshow("Bilateral Filter", bilateral)
+
 def bilateral_filter(file_path):
+    global original_image
     if(file_path != None):
-        img = cv2.imread(file_path)
-        bilateral_img = cv2.bilateralFilter(img, d=9, sigmaColor=90, sigmaSpace=90)
-        cv2.imshow("Bilateral Filtered Image", bilateral_img)
+        original_image = cv2.imread(file_path)
+
+        cv2.namedWindow("Bilateral Filter")
+        cv2.createTrackbar("m", "Bilateral Filter", 1, 5, apply_bilateral_filter)
+        # init with m = 1
+        apply_bilateral_filter(1)
 
 #2.3
-def median_filter(file_path):
-    if(file_path != None):
-        img = cv2.imread(file_path)
-        median_img = cv2.medianBlur(img, ksize=5)
-        cv2.imshow("Median Filtered Image", median_img)
+def apply_median_filter(m):
+    # Calculate kernal size
+    kernel_size = 2 * m + 1
+    # Bilateral Filter
+    median = cv2.medianBlur(original_image, ksize=kernel_size)
+    # Show image 
+    cv2.imshow("Median Filter", median)
 
+def median_filter(file_path):
+    global original_image
+    if(file_path != None):
+        original_image = cv2.imread(file_path)
+
+        cv2.namedWindow("Median Filter")
+        cv2.createTrackbar("m", "Median Filter", 1, 5, apply_median_filter)
+        # init with m = 1
+        apply_median_filter(1)
 
 #3. Edge Dectection
 #3.1
-def sobel_x(file_path):
-    if(file_path != None):
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        img = cv2.GaussianBlur(img, (3, 3), 0)
-        sobelx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
-        cv2.imshow("Sobel X", sobelx)
+def sobel_x(file_path, showImages=True):
+    if file_path is not None:
+        image = cv2.imread(file_path)
+        #Convert the RGB image into a grayscale image 
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Smooth grayscale image with Gaussian smoothing filter
+        m = 1
+        kernel_size = 2 * m + 1  # Kernel size of Gaussian filter: (2m+1) x (2m+1)
+        blur = cv2.GaussianBlur(gray, (kernel_size, kernel_size), sigmaX =0, sigmaY=0)
+
+        # Sobel X filter
+        sobel_x_filter = np.array([[-1, 0, 1],
+                                   [-2, 0, 2],
+                                   [-1, 0, 1]])
+
+        # init result
+        sobel_x_result = np.zeros_like(blur, dtype=np.float32) #float32: prevent overflow
+        # convolution 
+        for i in range(1, blur.shape[0] - 1):
+            for j in range(1, blur.shape[1] - 1):
+                # Extract the 3x3 region from blur
+                region = blur[i - 1:i + 2, j - 1:j + 2]
+                # Apply the Sobel kernel
+                sobel_value = np.sum(region * sobel_x_filter)
+                sobel_x_result[i, j] = sobel_value
+        
+        
+        # Take the absolute value and scale to 0-255 for display
+        sobel_x_result = np.abs(sobel_x_result)  # Take absolute values
+        sobel_x_result = np.clip(sobel_x_result,0,255) 
+        sobel_x_result = sobel_x_result.astype(np.uint8)  # Convert to uint8, to make it compatible with cv2.imshow
+        
+        if showImages:
+            # show image
+            cv2.imshow("Sobel X", sobel_x_result)
+        else:
+            # use the result in 3.3 & 3.4
+            return sobel_x_result
 
 #3.2
-def sobel_y(file_path):
-    if(file_path != None):
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        img = cv2.GaussianBlur(img, (3, 3), 0)
-        sobely = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
-        cv2.imshow("Sobel Y", sobely)
+def sobel_y(file_path, showImages=True):
+    if file_path is not None:
+        image = cv2.imread(file_path)
+        #Convert the RGB image into a grayscale image 
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+        # Smooth grayscale image with Gaussian smoothing filter
+        m = 1
+        kernel_size = 2 * m + 1  # Kernel size of Gaussian filter: (2m+1) x (2m+1)
+        blur = cv2.GaussianBlur(gray, (kernel_size, kernel_size), sigmaX =0, sigmaY=0)
+
+        # Sobel Y filter
+        sobel_y_filter = np.array([[-1,-2,-1],
+                                   [ 0, 0, 0],
+                                   [ 1, 2, 1]])
+
+        # init result
+        sobel_y_result = np.zeros_like(blur, dtype=np.float32) #float32: prevent overflow
+        # convolution 
+        for i in range(1, blur.shape[0] - 1):
+            for j in range(1, blur.shape[1] - 1):
+                # Extract the 3x3 region from blur
+                region = blur[i - 1:i + 2, j - 1:j + 2]
+                # Apply the Sobel kernel
+                sobel_value = np.sum(region * sobel_y_filter)
+                sobel_y_result[i, j] = sobel_value
+        
+        
+        # Take the absolute value and scale to 0-255 for display
+        sobel_y_result = np.abs(sobel_y_result)  # Take absolute values
+        sobel_y_result = np.clip(sobel_y_result,0,255) 
+        sobel_y_result = sobel_y_result.astype(np.uint8)  # Convert to uint8, to make it compatible with cv2.imshow
+        
+        if showImages:
+            # show image
+            cv2.imshow("Sobel Y", sobel_y_result)
+        else:
+            # use the result in 3.3 & 3.4
+            return sobel_y_result
+        
 #3.3 Combination and Threshold
 def combination_threshold(file_path):
-    if(file_path != None):
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        sobelx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
-        sobely = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
-        combined = cv2.magnitude(sobelx, sobely)
-        _, thresholded = cv2.threshold(combined, 128, 255, cv2.THRESH_BINARY)
-        cv2.imshow("Combination and Threshold", thresholded)
+    if file_path is not None:
+        # Use the rsult from Sobel X and Sobel Y
+        sobel_x_result = sobel_x(file_path, showImages=False)
+        sobel_y_result = sobel_y(file_path, showImages=False)
+
+        # Combine Sobel X and Sobel Y (need to use astype(np.float32), or there will be an error)
+        combination = np.sqrt(sobel_x_result.astype(np.float32)**2 + sobel_y_result.astype(np.float32)**2)
+
+        # Normalize the combination result to the range [0, 255]
+        normalized = cv2.normalize(combination, None, 0, 255, cv2.NORM_MINMAX)
+        normalized = normalized.astype(np.uint8)
+
+        # Apply thresholds: (1) 128, (2) 28
+        _, result1 = cv2.threshold(normalized, 128, 255, cv2.THRESH_BINARY)
+        _, result2 = cv2.threshold(normalized, 28, 255, cv2.THRESH_BINARY)
+
+        # Show both combination and threshold results
+        cv2.imshow('Combination Result', normalized)
+        cv2.imshow('Threshold Result (128)', result1)
+        cv2.imshow('Threshold Result (28)', result2)
 
 #3.4
 def gradient_angle(file_path):
-    if(file_path != None):
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        sobelx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
-        sobely = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
-        gradient = np.arctan2(sobely, sobelx)
-        cv2.imshow("Gradient Angle", gradient)
+    if file_path is not None:
+        # Compute Sobel X and Sobel Y
+        sobel_x_result = sobel_x(file_path, showImages=False)
+        sobel_y_result = sobel_y(file_path, showImages=False)
 
+        # Calculate the gradient angle θ in degrees
+        gradient_angle = np.arctan2(sobel_y_result, sobel_x_result) * (180.0 / np.pi)
+        gradient_angle[gradient_angle < 0] += 360  # Normalize angles to [0, 360)
+
+        # Create masks for the specified angle ranges
+        mask1 = np.zeros_like(gradient_angle, dtype=np.uint8)
+        mask2 = np.zeros_like(gradient_angle, dtype=np.uint8)
+
+        # Mask for angle range 170˚ to 190˚
+        mask1[(gradient_angle >= 170) & (gradient_angle <= 190)] = 255
+        # Mask for angle range 260˚ to 280˚
+        mask2[(gradient_angle >= 260) & (gradient_angle <= 280)] = 255
+
+        # Apply bitwise AND to the Sobel results with the masks
+        result1 = cv2.bitwise_and(sobel_x_result.astype(np.uint8), mask1)
+        result2 = cv2.bitwise_and(sobel_y_result.astype(np.uint8), mask2)
+
+        # Show both results
+        cv2.imshow('Result for 170˚ to 190˚', result1)
+        cv2.imshow('Result for 260˚ to 280˚', result2)
 
 #4. Transforms
 def apply_transform(file_path, angle, scale, tx, ty):

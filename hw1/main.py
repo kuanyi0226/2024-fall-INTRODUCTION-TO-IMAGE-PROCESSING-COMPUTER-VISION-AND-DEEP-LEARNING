@@ -14,7 +14,7 @@ class ImageProcessorApp(QWidget):
         # Image Loading 
         self.load_btn1 = QPushButton("Load Image 1")
         self.load_btn1.clicked.connect(self.load_image1)
-        self.load_label1 = QLabel("No image loaded")
+        self.load_label1 = QLabel("No image loaded")#default label
         
         self.load_btn2 = QPushButton("Load Image 2")
         self.load_btn2.clicked.connect(self.load_image2)
@@ -35,7 +35,7 @@ class ImageProcessorApp(QWidget):
         #layout2.addWidget(QLabel("2. Image Smoothing"), 0, 1)
         layout2.addWidget(self.create_task_button("2.1 Gaussian Blur", image_processing.gaussian_blur))
         layout2.addWidget(self.create_task_button("2.2 Bilateral Filter", image_processing.bilateral_filter))
-        layout2.addWidget(self.create_task_button("2.3 Median Filter", image_processing.median_filter))
+        layout2.addWidget(self.create_task_button("2.3 Median Filter", image_processing.median_filter, loadButton=2))
         problem2.setLayout(layout2)
 
         #3. Edge Detection Buttons
@@ -101,14 +101,17 @@ class ImageProcessorApp(QWidget):
         main_layout.addLayout(right_layout)
         self.setLayout(main_layout)
     
-    def create_task_button(self, label, func):
+    def create_task_button(self, label, func, loadButton=1):
         btn = QPushButton(label)
-        btn.clicked.connect(lambda: func(self.image_path1))  # Use Image 1 by default
+        if loadButton==2:
+            btn.clicked.connect(lambda: func(self.image_path2))  # Use Image 2 for 2.3
+        else:
+            btn.clicked.connect(lambda: func(self.image_path1))  # Use Image 1 by default
         return btn
 
     def load_image1(self):
         self.image_path1, _ = QFileDialog.getOpenFileName()
-        self.load_label1.setText(self.image_path1)
+        self.load_label1.setText(self.image_path1)#change the label text
         
     def load_image2(self):
         self.image_path2, _ = QFileDialog.getOpenFileName()
@@ -123,8 +126,9 @@ class ImageProcessorApp(QWidget):
                 ty = int(self.ty_input.text())
                 image_processing.apply_transform(self.image_path1, angle, scale, tx, ty)
             except ValueError:
-                print("Please enter valid numeric values.")
+                print("The input value is wrong")
 
+#main codes
 app = QApplication(sys.argv)
 window = ImageProcessorApp()
 window.show()
