@@ -1,53 +1,110 @@
-# main.py
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QWidget, QFileDialog
+from PyQt5.QtGui import QPixmap
 import train
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MNIST and Cat-Dog Classifier")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 600)
+        self.initUI()
 
-        # Layout
-        layout = QVBoxLayout()
+    def initUI(self):
+        # 主佈局
+        main_layout = QHBoxLayout()
 
-        # Buttons for Task 1
-        btn1_1 = QPushButton("1.1 Show Structure")
-        btn1_1.clicked.connect(train.load_and_show_vgg16)
-        layout.addWidget(btn1_1)
+        # 第一列: Load Image & Video
+        col1 = QVBoxLayout()
+        self.load_image_btn = QPushButton("Load Image")
+        self.load_video_btn = QPushButton("Load Video")
+        self.load_image_btn.clicked.connect(self.load_q1_image)
+        col1.addWidget(self.load_image_btn)
+        col1.addWidget(self.load_video_btn)
 
-        btn1_2 = QPushButton("1.2 Show Acc and Loss")
-        btn1_2.clicked.connect(train.show_accuracy_and_loss)
-        layout.addWidget(btn1_2)
+        # 第二列: Q1 功能
+        col2 = QVBoxLayout()
+        self.q1_show_structure_btn = QPushButton("1.1 Show Structure")
+        self.q1_show_acc_loss_btn = QPushButton("1.2 Show Acc and Loss")
+        self.q1_predict_btn = QPushButton("1.3 Predict")
+        self.q1_label = QLabel("Predict")
 
-        btn1_3 = QPushButton("1.3 Predict")
-        btn1_3.clicked.connect(lambda: train.predict_with_vgg16(model_path='best_mnist_model.h5', sample_image_path='sample_image.png'))
-        layout.addWidget(btn1_3)
+        self.q1_show_structure_btn.clicked.connect(train.load_and_show_vgg16)
+        self.q1_show_acc_loss_btn.clicked.connect(lambda: train.show_accuracy_and_loss("mnist_vgg16_history.npy"))
+        self.q1_predict_btn.clicked.connect(self.q1_predict)
 
-        # Buttons for Task 2
-        btn2_1 = QPushButton("2.1 Load Image")
-        btn2_1.clicked.connect(lambda: train.load_and_resize_dataset('cat_dog_dataset/'))
-        layout.addWidget(btn2_1)
+        col2.addWidget(self.q1_show_structure_btn)
+        col2.addWidget(self.q1_show_acc_loss_btn)
+        col2.addWidget(self.q1_predict_btn)
+        col2.addWidget(self.q1_label)
 
-        btn2_2 = QPushButton("2.2 Show Model Structure")
-        btn2_2.clicked.connect(train.load_and_show_resnet50)
-        layout.addWidget(btn2_2)
+        # 第三列: Q2 功能
+        col3 = QVBoxLayout()
+        self.q2_load_image_btn = QPushButton("Q2 Load Image")
+        self.q2_1_btn = QPushButton("2.1 Show Images")
+        self.q2_2_btn = QPushButton("2.2 Show Model Structure")
+        self.q2_3_btn = QPushButton("2.3 Compare Models")
+        self.q2_4_btn = QPushButton("2.4 Inference")
+        self.q2_label = QLabel("Prediction:")
 
-        btn2_3 = QPushButton("2.3 Show Comparison")
-        btn2_3.clicked.connect(lambda: train.train_and_compare_resnet50('cat_dog_dataset/'))
-        layout.addWidget(btn2_3)
+        self.q2_load_image_btn.clicked.connect(self.load_q2_image)
+        self.q2_2_btn.clicked.connect(train.show_resnet50_architecture)
+        self.q2_3_btn.clicked.connect(lambda: train.train_or_load_resnet50("model/Q2_resnet50_model.h5", "../Q2_Dataset/dataset/", epochs=10))
+        self.q2_4_btn.clicked.connect(self.q2_inference)
 
-        btn2_4 = QPushButton("2.4 Inference")
-        btn2_4.clicked.connect(lambda: train.predict_with_resnet50(model_path='resnet50_model.h5', sample_image_path='cat_or_dog.png'))
-        layout.addWidget(btn2_4)
+        col3.addWidget(self.q2_load_image_btn)
+        col3.addWidget(self.q2_1_btn)
+        col3.addWidget(self.q2_2_btn)
+        col3.addWidget(self.q2_3_btn)
+        col3.addWidget(self.q2_4_btn)
+        col3.addWidget(self.q2_label)
 
-        # Central Widget
+        # 第四列: 顯示圖片框
+        col4 = QVBoxLayout()
+        self.q1_image_label = QLabel()
+        self.q1_image_label.setFixedSize(200, 200)
+        self.q1_image_label.setStyleSheet("border: 1px solid black;")
+
+        self.q2_image_label = QLabel()
+        self.q2_image_label.setFixedSize(200, 200)
+        self.q2_image_label.setStyleSheet("border: 1px solid black;")
+
+        col4.addWidget(self.q1_image_label)
+        col4.addWidget(self.q2_image_label)
+
+        # 合併佈局
+        main_layout.addLayout(col1)
+        main_layout.addLayout(col2)
+        main_layout.addLayout(col3)
+        main_layout.addLayout(col4)
+
+        # 設置主視窗
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(main_layout)
         self.setCentralWidget(container)
 
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-sys.exit(app.exec_())
+    def load_q1_image(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
+        if file_name:
+            pixmap = QPixmap(file_name)
+            self.q1_image_label.setPixmap(pixmap.scaled(self.q1_image_label.size()))
+
+    def q1_predict(self):
+        result = train.predict_with_vgg16("best_mnist_model.h5", "sample_image.png")
+        self.q1_label.setText(f"Predict: {result}")
+
+    def load_q2_image(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
+        if file_name:
+            pixmap = QPixmap(file_name)
+            self.q2_image_label.setPixmap(pixmap.scaled(self.q2_image_label.size()))
+
+    def q2_inference(self):
+        result = train.predict_with_resnet50("model/Q2_resnet50_model.h5", "sample_image.jpg")
+        self.q2_label.setText(f"Prediction: {result}")
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
