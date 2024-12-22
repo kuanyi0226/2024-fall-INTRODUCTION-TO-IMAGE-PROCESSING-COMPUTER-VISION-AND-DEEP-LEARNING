@@ -8,6 +8,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("MNIST and Cat-Dog Classifier")
         self.setGeometry(100, 100, 1000, 600)
+        self.loaded_image_path_q1 = None  # 用于存储 Q1 加载的图片路径
+        self.loaded_image_path_q2 = None  # 用于存储 Q2 加载的图片路径
         self.initUI()
 
     def initUI(self):
@@ -86,25 +88,35 @@ class MainWindow(QMainWindow):
     def load_q1_image(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
         if file_name:
+            self.loaded_image_path_q1 = file_name
             pixmap = QPixmap(file_name)
             self.q1_image_label.setPixmap(pixmap.scaled(self.q1_image_label.size()))
+            print(f"Loaded Q1 image: {file_name}")
 
     def q1_predict(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
-        if file_name:
-            result = train.predict_with_vgg16("best_mnist_vgg16.pth", file_name)
+        if self.loaded_image_path_q1 is None:
+            print("No Q1 image loaded. Please load an image first.")
+            return
+
+        result = train.predict_with_vgg16("best_mnist_vgg16.pth", self.loaded_image_path_q1)
+        if result is not None:
             self.q1_label.setText(f"Predict: {result}")
 
     def load_q2_image(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
         if file_name:
+            self.loaded_image_path_q2 = file_name
             pixmap = QPixmap(file_name)
             self.q2_image_label.setPixmap(pixmap.scaled(self.q2_image_label.size()))
+            print(f"Loaded Q2 image: {file_name}")
 
     def q2_inference(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
-        if file_name:
-            result = train.predict_with_resnet50("model/Q2_resnet50_model.pth", file_name)
+        if self.loaded_image_path_q2 is None:
+            print("No Q2 image loaded. Please load an image first.")
+            return
+
+        result = train.predict_with_resnet50("model/Q2_resnet50_model.pth", self.loaded_image_path_q2)
+        if result is not None:
             self.q2_label.setText(f"Prediction: {result}")
 
 if __name__ == '__main__':
