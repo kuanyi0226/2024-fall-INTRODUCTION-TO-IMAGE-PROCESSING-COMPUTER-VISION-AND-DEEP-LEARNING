@@ -11,10 +11,10 @@ class MainWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        # 主佈局
+        # Main layout
         main_layout = QHBoxLayout()
 
-        # 第一列: Load Image & Video
+        # Column 1: Load Image & Video
         col1 = QVBoxLayout()
         self.load_image_btn = QPushButton("Load Image")
         self.load_video_btn = QPushButton("Load Video")
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         col1.addWidget(self.load_image_btn)
         col1.addWidget(self.load_video_btn)
 
-        # 第二列: Q1 功能
+        # Column 2: Q1 Functions
         col2 = QVBoxLayout()
         self.q1_show_structure_btn = QPushButton("1.1 Show Structure")
         self.q1_show_acc_loss_btn = QPushButton("1.2 Show Acc and Loss")
@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         self.q1_label = QLabel("Predict")
 
         self.q1_show_structure_btn.clicked.connect(train.load_and_show_vgg16)
-        self.q1_show_acc_loss_btn.clicked.connect(lambda: train.show_accuracy_and_loss("mnist_vgg16_history.npy"))
+        self.q1_show_acc_loss_btn.clicked.connect(lambda: train.show_accuracy_and_loss("mnist_vgg16_log.pth"))
         self.q1_predict_btn.clicked.connect(self.q1_predict)
 
         col2.addWidget(self.q1_show_structure_btn)
@@ -38,7 +38,7 @@ class MainWindow(QMainWindow):
         col2.addWidget(self.q1_predict_btn)
         col2.addWidget(self.q1_label)
 
-        # 第三列: Q2 功能
+        # Column 3: Q2 Functions
         col3 = QVBoxLayout()
         self.q2_load_image_btn = QPushButton("Q2 Load Image")
         self.q2_1_btn = QPushButton("2.1 Show Images")
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
 
         self.q2_load_image_btn.clicked.connect(self.load_q2_image)
         self.q2_2_btn.clicked.connect(train.show_resnet50_architecture)
-        self.q2_3_btn.clicked.connect(lambda: train.train_or_load_resnet50("model/Q2_resnet50_model.h5", "../Q2_Dataset/dataset/", epochs=10))
+        self.q2_3_btn.clicked.connect(lambda: train.train_or_load_resnet50("model/Q2_resnet50_model.pth", "../Q2_Dataset/dataset/", epochs=10))
         self.q2_4_btn.clicked.connect(self.q2_inference)
 
         col3.addWidget(self.q2_load_image_btn)
@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
         col3.addWidget(self.q2_4_btn)
         col3.addWidget(self.q2_label)
 
-        # 第四列: 顯示圖片框
+        # Column 4: Image Display
         col4 = QVBoxLayout()
         self.q1_image_label = QLabel()
         self.q1_image_label.setFixedSize(200, 200)
@@ -72,13 +72,13 @@ class MainWindow(QMainWindow):
         col4.addWidget(self.q1_image_label)
         col4.addWidget(self.q2_image_label)
 
-        # 合併佈局
+        # Merge layouts
         main_layout.addLayout(col1)
         main_layout.addLayout(col2)
         main_layout.addLayout(col3)
         main_layout.addLayout(col4)
 
-        # 設置主視窗
+        # Set main widget
         container = QWidget()
         container.setLayout(main_layout)
         self.setCentralWidget(container)
@@ -90,8 +90,10 @@ class MainWindow(QMainWindow):
             self.q1_image_label.setPixmap(pixmap.scaled(self.q1_image_label.size()))
 
     def q1_predict(self):
-        result = train.predict_with_vgg16("best_mnist_model.h5", "sample_image.png")
-        self.q1_label.setText(f"Predict: {result}")
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
+        if file_name:
+            result = train.predict_with_vgg16("best_mnist_vgg16.pth", file_name)
+            self.q1_label.setText(f"Predict: {result}")
 
     def load_q2_image(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
@@ -100,8 +102,10 @@ class MainWindow(QMainWindow):
             self.q2_image_label.setPixmap(pixmap.scaled(self.q2_image_label.size()))
 
     def q2_inference(self):
-        result = train.predict_with_resnet50("model/Q2_resnet50_model.h5", "sample_image.jpg")
-        self.q2_label.setText(f"Prediction: {result}")
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Image File", "", "Images (*.png *.jpg *.bmp)")
+        if file_name:
+            result = train.predict_with_resnet50("model/Q2_resnet50_model.pth", file_name)
+            self.q2_label.setText(f"Prediction: {result}")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
